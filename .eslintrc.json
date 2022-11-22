@@ -42,6 +42,7 @@
     "no-delete-var": 1,
     "no-unused-vars": 1,
     "react/prop-types": "off",
-    "no-mixed-spaces-and-tabs": 1
+    "no-mixed-spaces-and-tabs": 1,
+    "react/react-in-jsx-scope": "off"
   }
 }

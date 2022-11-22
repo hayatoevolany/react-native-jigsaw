@@ -1,230 +1,135 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { ScreenContainer } from "@draftbit/ui";
+import { createElement, useEffect, useReducer, useState } from "react";
+import { View, Text, TextInput, Image } from "react-native";
+import {
+  DefaultTheme,
+  Provider,
+  Row,
+  ScreenContainer,
+  Stack,
+} from "@draftbit/ui";
 import {
   SafeAreaProvider,
   initialWindowMetrics,
 } from "react-native-safe-area-context";
-import {
-  useNavigation,
-  DrawerActions,
-  NavigationContainer,
-} from "@react-navigation/native";
-import { Image } from "@draftbit/core";
-import { createDrawerNavigator } from "@react-navigation/drawer";
 
-const Drawer = createDrawerNavigator();
-
-function Test() {
-  return (
-    <View>
-      <Text>Hello there.... I am test.</Text>
-    </View>
-  );
-}
-
-const ROUTES = {
-  Test: Test,
-};
-
-function Example({ title, children }) {
-  const navigation = useNavigation();
-
-  return (
-    <ScreenContainer
-      hasSafeArea={true}
-      hasTopSafeArea={true}
-      hasBottomSafeArea={true}
-      scrollable={false}
-    >
-      <View style={exampleStyles.headerStyle}>
-        <TouchableOpacity
-          style={exampleStyles.menuButtonStyle}
-          onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-        >
-          <Image
-            style={exampleStyles.menuButtonImageStyle}
-            source={require("./assets/images/hamburger.png")}
-          />
-        </TouchableOpacity>
-
-        <Text style={[exampleStyles.headerTextStyle]}>{title}</Text>
-      </View>
-      <ScreenContainer scrollable={true} hasSafeArea={false}>
-        {children}
-      </ScreenContainer>
-    </ScreenContainer>
-  );
-}
+import test_json from "./_json_test.json";
+import JsonGenerator from "./_actual_json_generator";
+import MyEditor from "./_my_editor";
 
 export default function Generator() {
-  // How do we even start this?
-  // We know we want to have:
-  /*
-            1. An editable menu on the left side
-            2. A viewable app in the center
-            3. Settings for a given component on the right side.
-            
-            You can probably copy a lot of their ui.
-            
-            But try not to be obvious about it? I think we would get sued or something lol.
-            
-            We probably save the data as JSON somewhere in our state.
-            */
+  const keysToComponentMap = {
+    TextInput: TextInput,
+    Text: Text,
+    ScreenContainer: ScreenContainer,
+    Image: Image,
+    View: View,
+    Row: Row,
+    Stack: Stack,
+  };
+
+  const [current, setCurrent] = useState(json);
+
+  const [json, updateJson] = useReducer((state, action) => {
+    const payload = action.payload;
+    return JSON.parse(JSON.stringify(payload));
+  }, test_json);
+
+  const findElById = (id) => {
+    const stack = [[json, null]];
+    let foobar;
+    while (stack.length) {
+      const [curr, parent] = stack.pop();
+      // check for match on type
+      if (curr.id === id) {
+        foobar = curr;
+      }
+      curr.children &&
+        typeof curr.children !== "string" &&
+        curr.children.forEach((child) => stack.push([child, curr]));
+    }
+    return foobar;
+  };
+
+  const dfsUpdateStyles = (id, updates = {}) => {
+    const stack = [[json, null]];
+    let foobar;
+    while (stack.length) {
+      const [curr, parent] = stack.pop();
+      // check for match on type
+      if (curr.id === id) {
+        curr.styles = { ...curr.styles, ...updates };
+        foobar = curr;
+      }
+      curr.children &&
+        typeof curr.children !== "string" &&
+        curr.children.forEach((child) => stack.push([child, curr]));
+    }
+    updateJson({ payload: json });
+    foobar && setCurrent(foobar);
+  };
+
+  useEffect(() => {
+    dfsUpdateStyles("InputScreen");
+  }, []);
+
+  const stylesMap = (styles) => {
+    return styles;
+    // const mappedStyles = {};
+    // styles.forEach(style => mappedStyles[style.name] = style.value)
+    // return mappedStyles;
+  };
+
+  const renderComponent = (elConfig) => {
+    const { id, element, styles, children, className, ...props } = elConfig;
+    if (typeof keysToComponentMap[element] === "undefined") {
+      console.error(`component ${element} does not exist`);
+      return null;
+    }
+
+    return createElement(
+      keysToComponentMap[element],
+      {
+        ...props,
+        id: id,
+        key: id,
+        className: className || null,
+        style: {
+          ...(styles ? stylesMap(styles) : null),
+          ...(id === current?.id && {
+            outlineWidth: 2,
+            outlineColor: "blue",
+            outlineStyle: "inset",
+          }),
+        },
+      },
+      children &&
+        (typeof children === "string"
+          ? children
+          : children.map((c) => renderComponent(c)))
+    );
+  };
 
   return (
-    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <ScreenContainer
-        hasSafeArea={true}
-        hasTopSafeArea={true}
-        hasBottomSafeArea={true}
-        scrollable={false}
+    <Provider theme={DefaultTheme}>
+      <SafeAreaProvider
+        initialMetrics={initialWindowMetrics}
+        style={{ flexDirection: "row" }}
+        id="the-generator"
       >
-        <ScreenContainer
-          hasSafeArea={false}
-          scrollable={true}
-          style={{ flex: 1, backgroundColor: "pink" }}
-        >
-          <NavigationContainer>
-            <Drawer.Navigator
-              initialRouteName="Layout"
-              drawerContentOptions={{
-                activeTintColor: "rgba(90, 69, 255, 1)",
-              }}
-            >
-              {Object.entries(ROUTES).map(([key, Screen]) => {
-                return (
-                  <Drawer.Screen key={key} name={key}>
-                    {() => (
-                      <Example title={key}>
-                        <Screen theme={{}} />
-                      </Example>
-                    )}
-                  </Drawer.Screen>
-                );
-              })}
-            </Drawer.Navigator>
-          </NavigationContainer>
-        </ScreenContainer>
-      </ScreenContainer>
-    </SafeAreaProvider>
+        <JsonGenerator
+          findElById={findElById}
+          json={json}
+          current={current}
+          setCurrent={setCurrent}
+        />
+        {renderComponent(json)}
+        <MyEditor
+          jsons={json}
+          elConfig={current}
+          updateConfig={setCurrent}
+          updateStyles={dfsUpdateStyles}
+        />
+      </SafeAreaProvider>
+    </Provider>
   );
 }
-
-// function Example({ title, children }) {
-//   const navigation = useNavigation();
-
-//   return (
-//     <ScreenContainer
-//       hasSafeArea={true}
-//       hasTopSafeArea={true}
-//       hasBottomSafeArea={true}
-//       scrollable={false}
-//     >
-//       <View style={exampleStyles.headerStyle}>
-//         <TouchableOpacity
-//           style={exampleStyles.menuButtonStyle}
-//           onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-//         >
-//           <Image
-//             style={exampleStyles.menuButtonImageStyle}
-//             source={require("./assets/images/hamburger.png")}
-//           />
-//         </TouchableOpacity>
-
-//         <Text style={[exampleStyles.headerTextStyle]}>{title}</Text>
-//       </View>
-//       <ScreenContainer scrollable={true} hasSafeArea={false}>
-//         {children}
-//       </ScreenContainer>
-//     </ScreenContainer>
-//   );
-// }
-
-// function Examples() {
-//   return (
-//     <NavigationContainer>
-//       <Drawer.Navigator
-//         initialRouteName="Layout"
-//         drawerContentOptions={{
-//           activeTintColor: "rgba(90, 69, 255, 1)",
-//         }}
-//       >
-//         {Object.entries(ROUTES).map(([key, Screen]) => {
-//           return (
-//             <Drawer.Screen key={key} name={key}>
-//               {() => (
-//                 <Example title={key}>
-//                   <Screen theme={{}} />
-//                 </Example>
-//               )}
-//             </Drawer.Screen>
-//           );
-//         })}
-//       </Drawer.Navigator>
-//     </NavigationContainer>
-//   );
-// }
-
-// export default function App() {
-//   const [loaded] = Font.useFonts(customFonts);
-
-//   if (!loaded) {
-//     return <AppLoading />;
-//   }
-
-//   return (
-//     <Provider theme={DefaultTheme}>
-//       <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-//         <Examples />
-//       </SafeAreaProvider>
-//     </Provider>
-//   );
-// }
-const exampleStyles = StyleSheet.create({
-  mainParent: {
-    width: "100%",
-    height: "100%",
-    backgroundColor: "rgba(251, 252, 253, 1)",
-  },
-  headerStyle: {
-    flexDirection: "row",
-    backgroundColor: "rgba(90, 69, 255, 1)",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    height: "10%",
-    maxHeight: 60,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.29,
-    shadowRadius: 4.65,
-    elevation: 7,
-  },
-  menuButtonStyle: {
-    flex: 0.2,
-    alignItems: "center",
-  },
-  menuButtonImageStyle: {
-    height: 30,
-    width: 30,
-    resizeMode: "contain",
-    tintColor: "white",
-  },
-  headerTextStyle: {
-    flex: 1,
-    fontWeight: "bold",
-    color: "white",
-    fontSize: 20,
-    marginTop: 5,
-    marginStart: "2%",
-    marginBottom: 8,
-    paddingVertical: 4,
-  },
-  scrollViewStyle: {
-    paddingBottom: 20,
-  },
-});
