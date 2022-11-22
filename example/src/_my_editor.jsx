@@ -1,4 +1,11 @@
-import { ScreenContainer, IconButton, NumberInput, Stack, Row } from "@draftbit/ui";
+import {
+  ScreenContainer,
+  IconButton,
+  NumberInput,
+  Stack,
+  Row,
+  Touchable,
+} from "@draftbit/ui";
 import { Text, View, StyleSheet } from "react-native";
 const _ = require("lodash");
 
@@ -31,7 +38,7 @@ const InputField = ({ elConfig, field, updateStyles }) => {
   );
 };
 
-const MyEditor = ({ elConfig, updateStyles }) => {
+const MyEditor = ({ elConfig, updateStyles, updateElement }) => {
   if (!elConfig) return null;
 
   return (
@@ -42,9 +49,7 @@ const MyEditor = ({ elConfig, updateStyles }) => {
       scrollable={false}
       style={styles.myEditor}
     >
-      <Text
-      style={styles.header}
-      >{elConfig.id}</Text>
+      <Text style={styles.header}>{elConfig.id}</Text>
       <InputField
         elConfig={elConfig}
         updateStyles={updateStyles}
@@ -70,51 +75,68 @@ const MyEditor = ({ elConfig, updateStyles }) => {
         updateStyles={updateStyles}
         field="marginBottom"
       />
+      {['Row', 'Stack', 'View'].includes(elConfig.element) &&
+        <>
+          <Touchable
+            onPress={() => {
+              updateElement(elConfig.id, "Row");
+            }}
+          >
+            <Text style={{ color: "white" }}>Row</Text>
+          </Touchable>
+          <Touchable
+            onPress={() => {
+              updateElement(elConfig.id, "Stack");
+            }}
+          >
+            <Text style={{ color: "white" }}>Stack</Text>
+          </Touchable>
+        </>
+      }
     </ScreenContainer>
   );
 };
 
 export default MyEditor;
 
-
 const styles = StyleSheet.create({
   myEditor: {
-    backgroundColor: '#0E1217',
+    backgroundColor: "#0E1217",
     padding: 40,
   },
   header: {
-    color: 'white',
-    alignSelf: 'center',
+    color: "white",
+    alignSelf: "center",
     marginBottom: 40,
     fontSize: 24,
     textDecorationLine: "underline",
     textDecorationStyle: "solid",
-    textDecorationColor: "white"
+    textDecorationColor: "white",
   },
   inputField: {
     borderWidth: 1,
     marginBottom: 8,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
+    alignItems: "center",
+    justifyContent: "flex-end",
   },
   inputFieldText: {
-    color: 'white',
-    fontSize: 16, 
+    color: "white",
+    fontSize: 16,
     fontFamily: 'Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif',
     marginRight: 8,
   },
   inputFieldNumber: {
-    height: 'calc(100% - 4px)',
+    height: "calc(100% - 4px)",
     width: 40,
-    textAlign: 'center',
-    color: 'white',
+    textAlign: "center",
+    color: "white",
     marginHorizontal: 3,
   },
   inputFieldButton: {
     borderWidth: 1,
-    borderColor: 'white',
+    borderColor: "white",
     padding: 16,
-    color: 'white',
+    color: "white",
     borderRadius: 6,
   },
-})
+});

@@ -36,36 +36,54 @@ export default function Generator() {
 
   const findElById = (id) => {
     const stack = [[json, null]];
-    let foobar;
+    let selElement;
     while (stack.length) {
       const [curr, parent] = stack.pop();
       // check for match on type
       if (curr.id === id) {
-        foobar = curr;
+        selElement = curr;
       }
       curr.children &&
         typeof curr.children !== "string" &&
         curr.children.forEach((child) => stack.push([child, curr]));
     }
-    return foobar;
+    return selElement;
   };
 
   const dfsUpdateStyles = (id, updates = {}) => {
     const stack = [[json, null]];
-    let foobar;
+    let selElement;
     while (stack.length) {
       const [curr, parent] = stack.pop();
       // check for match on type
       if (curr.id === id) {
         curr.styles = { ...curr.styles, ...updates };
-        foobar = curr;
+        selElement = curr;
       }
       curr.children &&
         typeof curr.children !== "string" &&
         curr.children.forEach((child) => stack.push([child, curr]));
     }
     updateJson({ payload: json });
-    foobar && setCurrent(foobar);
+    selElement && setCurrent(selElement);
+  };
+
+  const dfsUpdateElement = (id, update) => {
+    const stack = [[json, null]];
+    let selElement;
+    while (stack.length) {
+      const [curr, parent] = stack.pop();
+      // check for match on type
+      if (curr.id === id) {
+        curr.element = update;
+        selElement = curr;
+      }
+      curr.children &&
+        typeof curr.children !== "string" &&
+        curr.children.forEach((child) => stack.push([child, curr]));
+    }
+    updateJson({ payload: json });
+    selElement && setCurrent(selElement);
   };
 
   useEffect(() => {
@@ -128,6 +146,7 @@ export default function Generator() {
           elConfig={current}
           updateConfig={setCurrent}
           updateStyles={dfsUpdateStyles}
+          updateElement={dfsUpdateElement}
         />
       </SafeAreaProvider>
     </Provider>
