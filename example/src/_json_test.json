@@ -15,7 +15,9 @@
       "children": [
         {
           "id": "TextInput",
-          "element": "TextInput"
+          "element": "TextInput",
+          "name": "text-input-1",
+          "defaultValue": ""
         },
         {
           "id": "Text",
@@ -36,7 +38,9 @@
       "children": [
         {
           "id": "TextInput2",
-          "element": "TextInput"
+          "element": "TextInput",
+          "name": "text-input-2",
+          "defaultValue": ""
         },
         {
           "id": "Text2",

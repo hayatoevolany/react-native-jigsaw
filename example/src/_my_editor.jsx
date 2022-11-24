@@ -6,7 +6,7 @@ import {
   Row,
   Touchable,
 } from "@draftbit/ui";
-import { Text, View, StyleSheet } from "react-native";
+import { Text, View, StyleSheet, TextInput } from "react-native";
 const _ = require("lodash");
 
 const InputField = ({ elConfig, field, updateStyles }) => {
@@ -14,7 +14,7 @@ const InputField = ({ elConfig, field, updateStyles }) => {
 
   return (
     <Row style={styles.inputField}>
-      <Text style={styles.inputFieldText}>{field}</Text>
+      <Text style={styles.inputFieldTitle}>{field}</Text>
       <IconButton
         size={24}
         color="white"
@@ -75,24 +75,47 @@ const MyEditor = ({ elConfig, updateStyles, updateElement }) => {
         updateStyles={updateStyles}
         field="marginBottom"
       />
-      {['Row', 'Stack', 'View'].includes(elConfig.element) &&
+      {["Row", "Stack", "View"].includes(elConfig.element) && (
         <>
           <Touchable
-            onPress={() => {
-              updateElement(elConfig.id, "Row");
-            }}
+            onPress={() => updateElement(elConfig.id, { element: "Row" })}
           >
             <Text style={{ color: "white" }}>Row</Text>
           </Touchable>
           <Touchable
-            onPress={() => {
-              updateElement(elConfig.id, "Stack");
-            }}
+            onPress={() => updateElement(elConfig.id, { element: "Stack" })}
           >
             <Text style={{ color: "white" }}>Stack</Text>
           </Touchable>
         </>
-      }
+      )}
+      {["TextInput"].includes(elConfig.element) && (
+        <Row style={styles.inputField}>
+          <Text style={styles.inputFieldTitle}>
+            {elConfig.name} default value
+          </Text>
+          <TextInput
+            style={styles.inputFieldText}
+            defaultValue={elConfig.defaultValue}
+            onChangeText={(val) =>
+              updateElement(elConfig.id, { defaultValue: val })
+            }
+          />
+        </Row>
+      )}
+
+      {["Text"].includes(elConfig.element) && (
+        <Row style={styles.inputField}>
+          <Text style={styles.inputFieldTitle}>{elConfig.name} Text:</Text>
+          <TextInput
+            value={elConfig.children}
+            style={styles.inputFieldText}
+            onChangeText={(val) =>
+              updateElement(elConfig.id, { children: val })
+            }
+          />
+        </Row>
+      )}
     </ScreenContainer>
   );
 };
@@ -114,16 +137,18 @@ const styles = StyleSheet.create({
     textDecorationColor: "white",
   },
   inputField: {
+    height: 40,
     borderWidth: 1,
     marginBottom: 8,
     alignItems: "center",
     justifyContent: "flex-end",
   },
-  inputFieldText: {
+  inputFieldTitle: {
     color: "white",
     fontSize: 16,
     fontFamily: 'Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif',
     marginRight: 8,
+    justifyContent: "center",
   },
   inputFieldNumber: {
     height: "calc(100% - 4px)",
@@ -138,5 +163,15 @@ const styles = StyleSheet.create({
     padding: 16,
     color: "white",
     borderRadius: 6,
+  },
+  inputFieldText: {
+    color: "white",
+    height: 40,
+    fontSize: 16,
+    paddingLeft: 8,
+    borderRadius: 4,
+    fontFamily: 'Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif',
+    borderColor: "white",
+    borderWidth: 1,
   },
 });
