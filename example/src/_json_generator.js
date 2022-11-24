@@ -13,7 +13,8 @@ import {
   initialWindowMetrics,
 } from "react-native-safe-area-context";
 
-import test_json from "./_json_test.json";
+// import test_json from "./_json_test.json";
+import test_json from "./_json_screen_test.json";
 import JsonGenerator from "./_actual_json_generator";
 import MyEditor from "./_my_editor";
 
@@ -60,10 +61,40 @@ export default function Generator() {
   const [current, setCurrent] = useState(json);
   const [loading, setLoading] = useState(true);
   const [listItems, setListItems] = useState([]);
+  const [currScreenIdx, setCurrScreenIdx] = useState(0);
+
+  const [allScreens, updateScreens] = useReducer((state, action) => {
+    switch (action.type) {
+      case "all-screens":
+        console.log({ payload: action.payload });
+        return action.payload;
+      case "update":
+        console.log("updating!");
+        console.log(state, "before");
+
+        if (json) state[currScreenIdx] = json;
+        console.log(state, "after");
+        return state;
+      default:
+        return state;
+    }
+  }, test_json);
+
+  console.log({ allScreens });
 
   const [json, updateJson] = useReducer((state, action) => {
-    const payload = action.payload;
-    return JSON.parse(JSON.stringify(payload));
+    let payload;
+    switch (action.type) {
+      case "screen":
+        console.log({ allScreens, currScreenIdx });
+        return allScreens[currScreenIdx];
+      case "update":
+        payload = action.payload;
+        return JSON.parse(JSON.stringify(payload));
+
+      default:
+        return {};
+    }
   }, test_json);
 
   /**
@@ -99,7 +130,7 @@ export default function Generator() {
         typeof curr.children !== "string" &&
         curr.children.forEach((child) => stack.push([child, curr]));
     }
-    opts.updateJson && updateJson({ payload: json });
+    opts.updateJson && updateJson({ type: "update", payload: json });
     return foundElem;
   };
 
@@ -168,7 +199,7 @@ export default function Generator() {
   // save to db
   const writeJson = async () => {
     const res = await http.post("/test/post_template", {
-      body: JSON.stringify(json),
+      body: JSON.stringify(allScreens),
     });
   };
 
@@ -190,7 +221,7 @@ export default function Generator() {
         typeof curr.children !== "string" &&
         curr.children.forEach((child) => stack.push([child, curr]));
     }
-    updateJson({ payload: json });
+    updateJson({ type: "update", payload: json });
   };
 
   // fetch from db, set in state
@@ -200,61 +231,90 @@ export default function Generator() {
       const res = await http.get("/test/get_template");
       if (res && res.template_body) {
         const body = JSON.parse(res.template_body);
-        updateJson({ payload: body });
-        searchElement(body.id, false, { setCurrent: true }); // body.id is the top-most element's id.
+        console.log({ body });
+        updateScreens({ type: "all-screens", payload: body });
+        searchElement("InputScreen", false, { setCurrent: true }); // body.id is the top-most element's id.
       }
 
-      const resp = await http.get("/test/get_list");
-      if (resp) {
-        console.log({ resp });
-        setListItems(resp);
-      }
+      // const resp = await http.get("/test/get_list");
+      // if (resp) {
+      //   console.log({ resp });
+      //   setListItems(resp);
+      // }
 
       setLoading(false);
     })();
   }, []);
 
   const loadFromJsonFile = () => {
-    updateJson({ payload: test_json });
+    updateJson({ type: "update", payload: test_json[currScreenIdx] });
   };
+
+  useEffect(() => {
+    updateScreens({ type: "update" });
+  }, [json]);
+
+  useEffect(() => {
+    updateJson({ type: "screen" });
+  }, [currScreenIdx]);
 
   return (
     <Provider theme={DefaultTheme}>
       <SafeAreaProvider
         id="the-generator"
         initialMetrics={initialWindowMetrics}
-        style={styles.screenContainer}
+        style={{ flexDirection: "column" }}
       >
         {loading ? (
           <Text>Loading...</Text>
         ) : (
           <>
-            <JsonGenerator
-              current={current}
-              findElement={findElement}
-              json={json}
-              addElement={addElement}
-            />
+            <Row>
+              {allScreens.map((screen, idx) => {
+                return (
+                  <Touchable
+                    key={screen.id}
+                    onPress={() => setCurrScreenIdx(idx)}
+                  >
+                    <Text>{screen.id}</Text>
+                  </Touchable>
+                );
+              })}
+            </Row>
             <ScreenContainer
               hasBottomSafeArea={true}
               hasSafeArea={true}
               hasTopSafeArea={true}
               scrollable={true}
-              style={styles.device}
+              style={styles.screenContainer}
             >
-              {renderComponent(json)}
-              <Touchable onPress={writeJson}>
-                <Text>Write to JSON</Text>
-              </Touchable>
-              <Touchable onPress={loadFromJsonFile}>
-                <Text>Load from JSON test file</Text>
-              </Touchable>
+              <JsonGenerator
+                current={current}
+                findElement={findElement}
+                json={json}
+                addElement={addElement}
+              />
+              <ScreenContainer
+                hasBottomSafeArea={true}
+                hasSafeArea={true}
+                hasTopSafeArea={true}
+                scrollable={true}
+                style={styles.device}
+              >
+                {renderComponent(json)}
+                <Touchable onPress={writeJson}>
+                  <Text>Write to JSON</Text>
+                </Touchable>
+                <Touchable onPress={loadFromJsonFile}>
+                  <Text>Load from JSON test file</Text>
+                </Touchable>
+              </ScreenContainer>
+              <MyEditor
+                elConfig={current}
+                updateElement={updateElement}
+                updateStyles={updateStyles}
+              />
             </ScreenContainer>
-            <MyEditor
-              elConfig={current}
-              updateElement={updateElement}
-              updateStyles={updateStyles}
-            />
           </>
         )}
       </SafeAreaProvider>

@@ -1,0 +1,109 @@
+[
+  {
+    "id": "InputScreen",
+    "element": "ScreenContainer",
+    "hasSafeArea": true,
+    "hasTopSafeArea": true,
+    "hasBottomSafeArea": true,
+    "scrollable": true,
+    "children": [
+      {
+        "id": "GreenView",
+        "element": "View",
+        "styles": {
+          "color": "green"
+        },
+        "children": [
+          {
+            "id": "TextInput",
+            "element": "TextInput",
+            "name": "text-input-1",
+            "defaultValue": ""
+          },
+          {
+            "id": "Text",
+            "element": "Text",
+            "styles": {
+              "color": "red"
+            },
+            "children": "hello there"
+          }
+        ]
+      },
+      {
+        "id": "BlueView",
+        "element": "View",
+        "styles": {
+          "color": "green"
+        },
+        "children": [
+          {
+            "id": "TextInput2",
+            "element": "TextInput",
+            "name": "text-input-2",
+            "defaultValue": ""
+          },
+          {
+            "id": "Text2",
+            "element": "Text",
+            "styles": {
+              "color": "red"
+            },
+            "children": "Goodbye there"
+          }
+        ]
+      },
+      {
+        "id": "PinkView",
+        "element": "View",
+        "styles": {
+          "color": "green"
+        },
+        "children": [
+          {
+            "id": "Image1",
+            "element": "Image",
+            "styles": {
+              "height": 300,
+              "width": 200
+            },
+            "source": "https://picsum.photos/200/300"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "CoolScreen",
+    "element": "ScreenContainer",
+    "hasSafeArea": true,
+    "hasTopSafeArea": true,
+    "hasBottomSafeArea": true,
+    "scrollable": true,
+    "children": [
+      {
+        "id": "GreenView",
+        "element": "View",
+        "styles": {
+          "color": "green"
+        },
+        "children": [
+          {
+            "id": "TextInput",
+            "element": "TextInput",
+            "name": "text-input-1",
+            "defaultValue": ""
+          },
+          {
+            "id": "Text",
+            "element": "Text",
+            "styles": {
+              "color": "red"
+            },
+            "children": "hello there"
+          }
+        ]
+      }
+    ]
+  }
+]
